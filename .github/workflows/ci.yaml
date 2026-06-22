@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Test
+        run: go test ./...
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+      - name: Bump image tag in config repo
+        env:
+          GH_TOKEN: ${{ secrets.CONFIG_REPO_TOKEN }}
+          FULL_SHA: ${{ github.sha }}
+        run: |
+          SHORT_SHA="${FULL_SHA:0:7}"
+          gh repo clone platform-engineer-lab/sample-service-config /tmp/config
+          cd /tmp/config
+          git config user.email "ci@platformlab.local"
+          git config user.name "CI"
+          sed -i "s|^  tag:.*|  tag: ${SHORT_SHA}|" chart/values.yaml
+          BRANCH="ci/bump-image-${SHORT_SHA}"
+          git checkout -b "${BRANCH}"
+          git add chart/values.yaml
+          git commit -m "ci: bump sample-service image to ${SHORT_SHA}"
+          git push origin "${BRANCH}"
+          gh pr create \
+            --repo platform-engineer-lab/sample-service-config \
+            --base main \
+            --head "${BRANCH}" \
+            --title "ci: bump sample-service image to ${SHORT_SHA}" \
+            --body "Automated image tag bump. Image: \`ghcr.io/platform-engineer-lab/sample-service:${SHORT_SHA}\`"
