@@ -49,7 +49,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          gh repo clone platform-engineer-lab/sample-service-config /tmp/config
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/platform-engineer-lab/sample-service-config.git" /tmp/config
           cd /tmp/config
           git config user.email "ci@platformlab.local"
           git config user.name "CI"
