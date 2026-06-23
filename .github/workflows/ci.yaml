@@ -37,9 +37,17 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository }}:${{ env.SHORT_SHA }}
 
+      - name: Generate GitHub App token for config repo
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: sample-service-config
+
       - name: Bump image tag in config repo
         env:
-          GH_TOKEN: ${{ secrets.CONFIG_REPO_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           gh repo clone platform-engineer-lab/sample-service-config /tmp/config
           cd /tmp/config
