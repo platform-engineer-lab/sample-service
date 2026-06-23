@@ -28,18 +28,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> "$GITHUB_ENV"
+
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository }}:${{ env.SHORT_SHA }}
 
       - name: Bump image tag in config repo
         env:
           GH_TOKEN: ${{ secrets.CONFIG_REPO_TOKEN }}
-          FULL_SHA: ${{ github.sha }}
         run: |
-          SHORT_SHA="${FULL_SHA:0:7}"
           gh repo clone platform-engineer-lab/sample-service-config /tmp/config
           cd /tmp/config
           git config user.email "ci@platformlab.local"
@@ -56,3 +57,4 @@ jobs:
             --head "${BRANCH}" \
             --title "ci: bump sample-service image to ${SHORT_SHA}" \
             --body "Automated image tag bump. Image: \`ghcr.io/platform-engineer-lab/sample-service:${SHORT_SHA}\`"
+
