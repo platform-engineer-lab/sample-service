@@ -2,6 +2,8 @@
 
 Minimal Go HTTP service used to demonstrate the gitops-promoter promotion pipeline.
 
+This repo contains **source code and CI only**. All delivery config — Argo CD Applications, gitops-promoter CRs, and the dry Helm chart — lives in [sample-service-config](https://github.com/platform-engineer-lab/sample-service-config).
+
 ## Endpoints
 
 - `GET /` — returns `sample-service <version>`
@@ -54,7 +56,9 @@ On every push to `main`:
    (uses the built-in `GITHUB_TOKEN`; make the package public in GitHub settings
    so spoke clusters can pull without credentials)
 3. **Bump tag** — opens a PR to `sample-service-config` updating `chart/values.yaml`
-   `image.tag` to the new SHA.
+   `image.tag` to the new SHA. Once merged, the Source Hydrator re-renders the chart,
+   gitops-promoter auto-merges the proposal to `env/dev`, and after dev reports healthy
+   the prod promotion follows automatically.
 
 ## Required secrets
 
