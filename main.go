@@ -9,7 +9,7 @@ import (
 var version = "dev"
 
 func rootHandler(w http.ResponseWriter, _ *http.Request) {
-	fmt.Fprintf(w, "sample-service %s\n , Hello World Test", version)
+	fmt.Fprintf(w, "sample-service %s\n , Hello World Test 2", version)
 }
 
 func healthzHandler(w http.ResponseWriter, _ *http.Request) {
